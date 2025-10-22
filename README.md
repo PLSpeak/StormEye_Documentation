@@ -398,26 +398,61 @@ Transaction details include:
 **How to Withdraw:**
 1. Click "Withdraw" button
 2. Enter amount to withdraw
-3. Enter destination wallet address
-4. Confirm network (BSC) and token (USDT)
-5. Submit withdrawal
+3. Review withdrawal summary showing:
+   - Withdrawal amount
+   - **$0.10 withdrawal fee**
+   - Total deducted from balance
+4. Enter destination wallet address
+5. Confirm network (BSC) and token (USDT)
+6. Submit withdrawal
 
 **Withdrawal Details:**
 - Network: BSC (Binance Smart Chain)
 - Token: USDT (BEP20)
-- Minimum: $0.01
+- **Withdrawal Fee: $0.10 per transaction**
+- Minimum: $0.11 (minimum $0.01 + $0.10 fee)
 - Maximum: Your available balance
-- Fee: Network gas fees (very low on BSC)
+- Gas Fee: Automatically handled (funded by system if needed)
 - Processing time: 1-2 minutes
 
+**Fee Structure:**
+- **Platform Fee**: $0.10 (goes to admin wallet)
+- **Network Gas Fee**: ~$0.0001 BNB (automatically funded if needed)
+- Total cost: $0.10 + negligible gas
+
 **Gas Fee Handling:**
-- System automatically handles gas fees
-- If insufficient BNB in wallet, system funds it
+- System automatically handles BNB gas fees
+- If insufficient BNB in wallet, system funds 0.0001 BNB
 - No manual BNB management needed
 
 ---
 
 ## Withdrawal Process
+
+### Withdrawal Fee Structure
+
+**Platform Fee: $0.10 per withdrawal**
+- Charged on every withdrawal transaction
+- Goes to admin wallet to cover operational costs
+- Separate from blockchain gas fees
+- Non-refundable
+
+**Total Withdrawal Cost:**
+- Requested Amount: User-specified
+- Platform Fee: $0.10
+- Gas Fee: ~$0.0001 BNB (auto-handled)
+- **Total Deducted: Amount + $0.10**
+
+**Example:**
+```
+Withdrawal Request: $20.00
+Platform Fee:        $0.10
+─────────────────────────
+Total Deducted:     $20.10
+
+You receive:        $20.00
+Admin receives:      $0.10 (fee)
+```
 
 ### Standard Withdrawal (From Wallet)
 
@@ -425,49 +460,145 @@ Transaction details include:
 1. **Initiate Withdrawal:**
    - Go to Wallet page
    - Click "Withdraw"
-   - Enter amount and destination address
+   - Enter amount (e.g., $20.00)
 
-2. **System Checks:**
-   - Verifies sufficient balance
+2. **Review Summary:**
+   - Amount: $20.00
+   - Fee: $0.10
+   - Total Deducted: $20.10
+   - System verifies sufficient balance ($20.10 required)
+
+3. **Enter Destination:**
+   - Paste BSC wallet address
+   - Verify address is correct
+   - Network auto-set to BSC
+   - Token auto-set to USDT
+
+4. **System Checks:**
+   - Verifies sufficient balance (including fee)
    - Checks destination address validity
    - Ensures sufficient gas (BNB)
 
-3. **Auto Gas Funding (if needed):**
+5. **Fee Processing:**
+   - $0.10 transferred to admin wallet first
+   - Transaction hash generated for fee
+   - Waits for blockchain confirmation
+
+6. **Auto Gas Funding (if needed):**
    - System detects low BNB balance
    - Sends 0.0001 BNB from admin wallet
-   - Waits for confirmation
+   - Waits for gas confirmation
 
-4. **Transfer Execution:**
-   - USDT transferred to destination
+7. **Main Transfer Execution:**
+   - $20.00 USDT transferred to destination
    - Transaction hash generated
    - Blockchain confirmation
 
-5. **Completion:**
-   - Transaction recorded in history
+8. **Completion:**
+   - Both transactions recorded in history:
+     - Withdrawal: $20.00 (your withdrawal)
+     - Withdrawal Fee: $0.10 (platform fee)
    - Balance updated
    - Email notification (if enabled)
+
+### Withdrawal Scenarios
+
+**Scenario 1: Sufficient Balance**
+```
+Balance: $50.00
+Withdraw: $20.00
+Fee: $0.10
+Result: ✅ Success
+  - Deducted: $20.10
+  - Received: $20.00
+  - New Balance: $29.90
+```
+
+**Scenario 2: Insufficient Balance**
+```
+Balance: $10.00
+Withdraw: $20.00
+Fee: $0.10
+Total Needed: $20.10
+Result: ❌ Error - "Insufficient balance"
+```
+
+**Scenario 3: Exact Balance**
+```
+Balance: $20.10
+Withdraw: $20.00
+Fee: $0.10
+Result: ✅ Success
+  - New Balance: $0.00
+```
 
 ### Withdrawal from Referral Earnings
 
 **Two Options:**
 
 **Option 1: Direct Withdrawal**
-- Wait for earnings to appear in wallet balance
+- Earnings automatically appear in wallet balance
 - Follow standard withdrawal process
-- Withdraw to any external address
+- $0.10 fee applies
+- Withdraw to any external BSC address
+
+**Example:**
+```
+Referral Earnings: $15.00 (auto-deposited to wallet)
+Wallet Balance: $15.00
+Withdraw: $14.90 (keeping $0.10 for fee)
+Fee: $0.10
+Total Deducted: $15.00
+You Receive: $14.90 in external wallet
+```
 
 **Option 2: Use for Plan Purchase**
 - Earnings available immediately in wallet
 - Use "Pay with Wallet" option when purchasing
-- No withdrawal needed
+- No withdrawal fee (internal transfer)
+- More cost-effective
+
+**Example:**
+```
+Referral Earnings: $15.00
+Purchase Zerger Plan: $15.00
+Fee: $0.00 (no fee for plan purchases)
+Result: Plan activated, balance = $0.00
+```
+
+### Transaction History Entries
+
+Withdrawals appear as two separate transactions:
+
+**1. Withdrawal Transaction**
+```
+Type: Withdrawal ⬆️
+Amount: -$20.00
+Status: Success
+TX Hash: 0xabc...123
+To: Your destination address
+```
+
+**2. Withdrawal Fee Transaction**
+```
+Type: Withdrawal Fee 💵
+Amount: -$0.10
+Status: Success
+TX Hash: 0xdef...456
+To: Admin wallet
+Note: Platform fee
+```
 
 ### Important Notes
 
-- **No Minimum Threshold**: Withdraw any amount
+- **Minimum Withdrawal**: $0.11 ($0.01 + $0.10 fee)
+- **No Maximum**: Withdraw up to full balance
 - **No Waiting Period**: Withdraw immediately after earning
-- **No Fees** (except network gas fees)
+- **Fee Required**: Always account for $0.10 fee
 - **Instant Processing**: 1-2 minute confirmation
 - **Transaction Hash**: Full blockchain transparency
+- **Two Transactions**: Fee paid first, then main withdrawal
+- **Non-Refundable Fee**: Fee charged even if main withdrawal fails (rare)
 
 ---
 ## Extension-Sale Site Integration
@@ -637,7 +768,7 @@ Backend returns:
 ```javascript
 {
   username: String,
-  type: String, // 'deposit', 'withdrawal', 'purchase', 'referral_earning'
+  type: String, // 'deposit', 'withdrawal', 'withdrawal_fee', 'purchase', 'referral_earning'
   amount: Number,
   currency: String, // 'BEP20_USDT'
   tx_hash: String, // Blockchain transaction hash
@@ -806,6 +937,7 @@ GET    /api/pricing/plans            - Get all pricing plans (public)
    - Insufficient funds → Must deposit first
    - Sufficient funds → Transfers to admin
    - Plan activated
+   - **Note**: No withdrawal fee for plan purchases
    ↓
 9. Downloads Chrome extension
    ↓
