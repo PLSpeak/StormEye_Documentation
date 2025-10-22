@@ -396,34 +396,50 @@ Transaction details include:
 
 #### 4. **Withdraw Funds**
 **How to Withdraw:**
-1. Click "Withdraw" button
-2. Enter amount to withdraw
-3. Review withdrawal summary showing:
+1. Click "Withdraw" button in wallet dashboard
+2. Enter amount to withdraw in USD
+3. System displays available balance and maximum withdrawable amount:
+   - Available Balance: Your total blockchain balance
+   - Max Withdrawal: Available - $0.10 fee
+4. Review withdrawal summary showing:
    - Withdrawal amount
-   - **$0.10 withdrawal fee**
-   - Total deducted from balance
-4. Enter destination wallet address
-5. Confirm network (BSC) and token (USDT)
-6. Submit withdrawal
+   - **$0.10 withdrawal fee** (highlighted in yellow warning)
+   - Total deducted from balance (in red)
+5. Enter destination wallet address (BSC address starting with 0x...)
+6. Confirm network (BSC - pre-selected and locked) and token (USDT - pre-selected and locked)
+7. Submit withdrawal request
 
 **Withdrawal Details:**
-- Network: BSC (Binance Smart Chain)
-- Token: USDT (BEP20)
-- **Withdrawal Fee: $0.10 per transaction**
-- Minimum: $0.11 (minimum $0.01 + $0.10 fee)
-- Maximum: Your available balance
-- Gas Fee: Automatically handled (funded by system if needed)
-- Processing time: 1-2 minutes
+- Network: BSC (Binance Smart Chain) - Cannot be changed
+- Token: USDT (BEP20) - Cannot be changed
+- **Withdrawal Fee: $0.10 per transaction** (Fixed platform fee)
+- Minimum Withdrawal: $0.01 (must have at least $0.11 total including fee)
+- Maximum Withdrawal: Available balance - $0.10 (auto-calculated and shown)
+- Gas Fee: Automatically handled by system (funded if needed)
+- Processing time: 1-2 minutes for blockchain confirmation
+- Transaction Transparency: Both fee and withdrawal get separate TX hashes
 
 **Fee Structure:**
-- **Platform Fee**: $0.10 (goes to admin wallet)
-- **Network Gas Fee**: ~$0.0001 BNB (automatically funded if needed)
-- Total cost: $0.10 + negligible gas
+- **Platform Fee**: $0.10 (transferred to admin wallet first)
+- **Network Gas Fee**: ~$0.0001 BNB (automatically funded by admin if user lacks BNB)
+- **Total User Cost**: $0.10 (gas covered by system)
 
-**Gas Fee Handling:**
-- System automatically handles BNB gas fees
-- If insufficient BNB in wallet, system funds 0.0001 BNB
-- No manual BNB management needed
+**Real-time Withdrawal Summary Display:**
+When you enter a withdrawal amount, the interface automatically calculates and displays:
+```
+Amount:          $20.00
+Fee:             $0.10
+─────────────────────────
+Total Deducted:  $20.10
+```
+This real-time calculation helps you verify you have sufficient balance before submitting.
+
+**Gas Fee Auto-Funding:**
+- System checks your BNB balance automatically
+- If BNB < 0.00005, system sends 0.0001 BNB from admin wallet
+- Gas funding transaction completes before main withdrawal
+- No action needed from user - completely automatic
+- Gas transactions are recorded but hidden from user transaction history
 
 ---
 
@@ -503,33 +519,93 @@ Admin receives:      $0.10 (fee)
 
 ### Withdrawal Scenarios
 
-**Scenario 1: Sufficient Balance**
+**Scenario 1: Sufficient Balance - Standard Withdrawal**
 ```
-Balance: $50.00
-Withdraw: $20.00
+Blockchain Balance: $50.00
+Withdrawal Request: $20.00
 Fee: $0.10
-Result: ✅ Success
-  - Deducted: $20.10
-  - Received: $20.00
-  - New Balance: $29.90
+Total Required: $20.10
+
+✅ SUCCESS:
+- Fee Transaction: $0.10 → Admin wallet (TX Hash 1)
+- Main Transaction: $20.00 → Your wallet (TX Hash 2)  
+- New Balance: $29.90
+- Processing Time: ~2 minutes total
 ```
 
 **Scenario 2: Insufficient Balance**
 ```
-Balance: $10.00
-Withdraw: $20.00
+Blockchain Balance: $10.00
+Withdrawal Request: $20.00
 Fee: $0.10
-Total Needed: $20.10
-Result: ❌ Error - "Insufficient balance"
+Total Required: $20.10
+
+❌ ERROR: "Insufficient balance"
+- System prevents transaction
+- Error message shows: "Available: $10.00, Required: $20.10 ($20.00 + $0.10 fee)"
+- No fees charged when transaction is prevented
+- Balance remains: $10.00
 ```
 
-**Scenario 3: Exact Balance**
+**Scenario 3: Exact Balance After Fee**
 ```
-Balance: $20.10
-Withdraw: $20.00
+Blockchain Balance: $20.10
+Withdrawal Request: $20.00
 Fee: $0.10
-Result: ✅ Success
-  - New Balance: $0.00
+Total Required: $20.10
+
+✅ SUCCESS:
+- All funds withdrawn
+- New Balance: $0.00
+- You receive: $20.00 in your external wallet
+```
+
+**Scenario 4: Maximum Withdrawal**
+```
+Blockchain Balance: $100.00
+User wants to withdraw everything
+
+Calculation:
+- Maximum possible withdrawal: $100.00 - $0.10 = $99.90
+- UI automatically shows: "Max Withdrawal: $99.90 (after $0.10 fee)"
+
+✅ SUCCESS if user enters $99.90:
+- Fee: $0.10 → Admin wallet
+- Withdrawal: $99.90 → Your wallet
+- New Balance: $0.00
+```
+
+**Scenario 5: Low BNB Balance (Auto Gas Funding)**
+```
+Blockchain Balance: $50.00
+BNB Balance: 0.00002 (insufficient for gas)
+Withdrawal Request: $20.00
+
+System Process:
+1. Detects low BNB: 0.00002 < 0.00005 required
+2. Auto-funds 0.0001 BNB from admin wallet
+3. Waits for gas funding confirmation (~30 seconds)
+4. Processes fee transaction: $0.10
+5. Processes withdrawal transaction: $20.00
+
+✅ SUCCESS:
+- Total time: ~2.5 minutes (includes gas funding)
+- User sees no difference in experience
+- No additional cost to user
+```
+
+**Scenario 6: Minimum Withdrawal**
+```
+Blockchain Balance: $0.11
+Withdrawal Request: $0.01 (minimum)
+Fee: $0.10
+Total Required: $0.11
+
+✅ SUCCESS:
+- Minimum withdrawal amount is $0.01
+- Total deducted: $0.11
+- You receive: $0.01 in external wallet
+- New Balance: $0.00
 ```
 
 ### Withdrawal from Referral Earnings
@@ -568,37 +644,297 @@ Result: Plan activated, balance = $0.00
 
 ### Transaction History Entries
 
-Withdrawals appear as two separate transactions:
+**Important**: The system creates TWO separate blockchain transactions for each withdrawal, but the user interface only displays the main withdrawal transaction in the visible history to avoid confusion. The withdrawal fee transaction is recorded internally but hidden from the user-facing transaction list.
 
-**1. Withdrawal Transaction**
+**What Users See in Transaction History:**
+
+**Withdrawal Transaction (User-Visible)**
 ```
 Type: Withdrawal ⬆️
 Amount: -$20.00
-Status: Success
-TX Hash: 0xabc...123
+Status: Success ✅
+TX Hash: 0xabc...123 (clickable BSCScan link)
 To: Your destination address
+Date/Time: Timestamp of transaction
 ```
 
-**2. Withdrawal Fee Transaction**
+**What Happens Behind the Scenes:**
+
+The system actually processes TWO transactions:
+
+**1. Withdrawal Fee Transaction (Internal - Hidden from UI)**
 ```
 Type: Withdrawal Fee 💵
 Amount: -$0.10
 Status: Success
 TX Hash: 0xdef...456
 To: Admin wallet
-Note: Platform fee
+Note: Platform operational fee
+Processing: Completed first, before main withdrawal
 ```
+
+**2. Main Withdrawal Transaction (User-Visible)**
+```
+Type: Withdrawal ⬆️
+Amount: -$20.00
+Status: Success  
+TX Hash: 0xabc...123
+To: User's destination address
+Processing: Executed after fee transaction confirms
+```
+
+**Transaction Status Indicators:**
+- ✅ Success (Green badge) - Transaction confirmed on blockchain
+- ❌ Failed (Red badge) - Transaction failed (rare, usually due to technical issues)
+
+**Transaction Filtering:**
+- User transaction list automatically filters out:
+  - Pending transactions (not yet confirmed)
+  - Withdrawal fee transactions (internal bookkeeping)
+  - Gas funding transactions (automatic system maintenance)
+- Only confirmed or failed meaningful transactions are displayed
+- This provides a cleaner, more user-friendly transaction history
+
+**Blockchain Verification:**
+- Each visible transaction includes a clickable TX Hash
+- Click TX Hash to view on BSCScan blockchain explorer
+- Full transparency - all transactions verifiable on-chain
+- Fee transactions also have TX hashes but are accessed through admin panel
 
 ### Important Notes
 
-- **Minimum Withdrawal**: $0.11 ($0.01 + $0.10 fee)
-- **No Maximum**: Withdraw up to full balance
-- **No Waiting Period**: Withdraw immediately after earning
-- **Fee Required**: Always account for $0.10 fee
-- **Instant Processing**: 1-2 minute confirmation
-- **Transaction Hash**: Full blockchain transparency
-- **Two Transactions**: Fee paid first, then main withdrawal
-- **Non-Refundable Fee**: Fee charged even if main withdrawal fails (rare)
+**Balance Requirements:**
+- **Minimum Withdrawal**: $0.01 (must have at least $0.11 total: $0.01 withdrawal + $0.10 fee)
+- **No Maximum**: Withdraw up to (Available Balance - $0.10)
+- **Real-time Validation**: System calculates max withdrawal automatically
+- **Fee Always Required**: Every withdrawal must account for $0.10 platform fee
+
+**Processing & Timing:**
+- **No Waiting Period**: Withdraw immediately after funds appear in blockchain balance
+- **Instant Validation**: System checks balance in real-time before allowing submission
+- **Processing Time**: 
+  - Fee transaction: ~30-60 seconds
+  - Main withdrawal: ~30-60 seconds  
+  - Total: 1-2 minutes typical
+  - With gas funding: 2-3 minutes maximum
+
+**Transaction Transparency:**
+- **Dual Transaction Hashes**: Each withdrawal generates 2 TX hashes
+  - Fee TX Hash: Visible to admin only
+  - Withdrawal TX Hash: Provided to user with BSCScan link
+- **Blockchain Verification**: All transactions verifiable on BSCScan
+- **Full Audit Trail**: Complete transaction history maintained
+- **Status Tracking**: Real-time confirmation status updates
+
+**Fee Details:**
+- **Fixed Platform Fee**: $0.10 per withdrawal (not percentage-based)
+- **Non-Refundable**: Fee charged even if main withdrawal fails (extremely rare)
+- **Transparent Display**: Fee clearly shown before transaction submission
+- **Admin Allocation**: Fee goes to admin wallet for operational costs
+- **No Hidden Costs**: Gas fees covered by system
+
+**Security & Validation:**
+- **Address Validation**: System validates BSC address format
+- **Network Locked**: Only BSC supported (prevents wrong network errors)
+- **Token Locked**: Only USDT BEP20 (prevents wrong token errors)
+- **Balance Verification**: Double-checks balance before and during processing
+- **Transaction Ordering**: Fee always processed first, ensuring admin compensation
+
+**User Experience Features:**
+- **Real-time Summary**: Withdrawal calculator shows total deduction as you type
+- **Clear Warnings**: Yellow warning box highlights withdrawal fee
+- **Auto-calculated Max**: System shows maximum withdrawable amount automatically
+- **Clean History**: Fee transactions hidden from user history for clarity
+- **Instant Feedback**: Success/error messages with transaction details
+- **BSCScan Links**: One-click blockchain verification
+
+**Error Handling:**
+- **Insufficient Balance**: Clear error message with exact amounts needed
+- **Invalid Address**: Immediate validation of wallet address format
+- **Gas Funding Issues**: Automatic retry logic with admin notification
+- **Network Issues**: Timeout protection with user notification
+- **Failed Transactions**: Rare but handled gracefully with full refund (minus fee)
+
+### Technical Implementation Details (For Developers)
+
+**Backend Architecture:**
+
+**Withdrawal Function: `wallet_service.process_withdrawal()`**
+```python
+Parameters:
+- encrypted_private_key: User's encrypted wallet private key
+- to_address: Destination wallet address  
+- amount: Withdrawal amount in USD
+- network: 'bsc' or 'polygon' (only BSC currently active)
+- token: 'usdt' or 'usdc' (only USDT currently active)
+- username: User's username for transaction recording
+
+Returns:
+- success (bool): Transaction success status
+- tx_hash (str): Main withdrawal transaction hash
+- error (str): Error message if failed
+- tx_id (int): Database transaction ID
+- fee_tx_hash (str): Fee transaction hash
+```
+
+**Processing Flow:**
+
+1. **Initialization & Validation**
+   ```python
+   # Decrypt user's private key
+   private_key = decrypt_private_key(encrypted_private_key)
+   account = Account.from_key(private_key)
+   
+   # Select network and contract
+   web3_client = bsc_web3  # BSC Web3 instance
+   contract_address = BEP20_USDT_CONTRACT
+   ```
+
+2. **Gas Fee Check & Auto-Funding**
+   ```python
+   user_bnb_balance = get_bnb_balance(account.address)
+   min_bnb_required = 0.00005
+   
+   if user_bnb_balance < min_bnb_required:
+       # Send 0.0001 BNB from admin wallet
+       send_gas_fee_from_admin(account.address, 0.0001)
+       wait_for_transaction_confirmation(gas_tx_hash, timeout=60)
+   ```
+
+3. **Balance Verification**
+   ```python
+   WITHDRAWAL_FEE = 0.1
+   total_required = amount + WITHDRAWAL_FEE
+   
+   if balance_formatted < total_required:
+       return False, "Insufficient balance"
+   ```
+
+4. **Fee Transaction Processing**
+   ```python
+   # Get current nonce
+   fee_nonce = web3_client.eth.get_transaction_count(account.address)
+   
+   # Build fee transaction
+   fee_transaction = contract.functions.transfer(
+       ADMIN_WALLET_ADDRESS,
+       fee_amount_wei
+   ).build_transaction({
+       'from': account.address,
+       'nonce': fee_nonce,
+       'gas': 100000,
+       'gasPrice': web3_client.eth.gas_price
+   })
+   
+   # Sign and send
+   signed_fee = web3_client.eth.account.sign_transaction(fee_transaction, private_key)
+   fee_tx_hash = web3_client.eth.send_raw_transaction(signed_fee.rawTransaction)
+   
+   # Wait for confirmation
+   wait_for_transaction_confirmation(fee_tx_hash, timeout=60)
+   ```
+
+5. **Main Withdrawal Processing**
+   ```python
+   # Use incremented nonce (nonce management is critical)
+   withdrawal_nonce = fee_nonce + 1
+   
+   # Build withdrawal transaction
+   transaction = contract.functions.transfer(
+       to_address,
+       amount_wei
+   ).build_transaction({
+       'from': account.address,
+       'nonce': withdrawal_nonce,
+       'gas': 100000,
+       'gasPrice': web3_client.eth.gas_price
+   })
+   
+   # Sign and send
+   signed_txn = web3_client.eth.account.sign_transaction(transaction, private_key)
+   tx_hash = web3_client.eth.send_raw_transaction(signed_txn.rawTransaction)
+   ```
+
+**Frontend Implementation:**
+
+**Withdrawal Component: `Wallet.js`**
+```javascript
+const WITHDRAWAL_FEE = 0.1;
+
+// Real-time validation
+const availableBalance = wallet?.blockchain_balances?.total_usd || 0;
+const maxWithdrawal = Math.max(0, availableBalance - WITHDRAWAL_FEE);
+
+// Balance check before submission
+const totalRequired = amount + WITHDRAWAL_FEE;
+if (totalRequired > availableBalance) {
+    setError(`Insufficient balance. Required: $${totalRequired.toFixed(2)}`);
+    return;
+}
+
+// API call
+const response = await withdrawFunds(amount, address, network, token);
+```
+
+**API Endpoint: `/api/wallet/withdraw`**
+```python
+@app.route('/api/wallet/withdraw', methods=['POST'])
+@jwt_required()
+def withdraw_from_wallet():
+    # Get user and validate
+    # Check blockchain balance
+    # Process withdrawal with fee
+    # Return success with TX hashes
+```
+
+**Database Schema:**
+
+**Transactions Table:**
+```sql
+transactions (
+    id: INTEGER PRIMARY KEY,
+    username: VARCHAR(255),
+    type: VARCHAR(50),  -- 'withdrawal', 'withdrawal_fee', 'deposit', etc.
+    amount: DECIMAL(10,2),
+    currency: VARCHAR(20),  -- 'BEP20_USDT', 'POLYGON_USDC'
+    status: VARCHAR(20),  -- 'pending', 'confirmed', 'failed'
+    tx_hash: VARCHAR(255),  -- Blockchain transaction hash
+    from_address: VARCHAR(255),
+    to_address: VARCHAR(255),
+    created_at: TIMESTAMP,
+    metadata: JSON  -- Additional transaction details
+)
+```
+
+**Transaction Recording:**
+- Each withdrawal creates 2 database entries:
+  1. `type='withdrawal_fee'`, `amount=0.10`, `to_address=admin_wallet`
+  2. `type='withdrawal'`, `amount=user_amount`, `to_address=user_destination`
+- Fee transactions filtered from user-facing transaction history
+- Both transactions maintain complete audit trail
+
+**Configuration:**
+```python
+# Environment Variables
+WITHDRAWAL_FEE = 0.1  # Fixed $0.10 fee
+ADMIN_WALLET_ADDRESS = "0x..."  # Fee recipient
+BEP20_USDT_CONTRACT = "0x55d398326f99059ff775485246999027b3197955"
+BSC_RPC_URL = "https://bsc-dataseed.binance.org/"
+MIN_BNB_FOR_GAS = 0.00005  # Threshold for auto gas funding
+GAS_FUNDING_AMOUNT = 0.0001  # BNB amount to send for gas
+```
+
+**Error Handling:**
+- All errors logged with emoji indicators (💰, ✅, ❌, ⚠️)
+- Transaction failures update database status
+- Failed transactions don't deduct from balance (except fee if already transferred)
+- Comprehensive error messages returned to frontend
+
+**Nonce Management (Critical):**
+- Fee transaction uses current nonce
+- Main withdrawal uses incremented nonce (fee_nonce + 1)
+- Prevents transaction replacement and ensures proper ordering
+- Essential for reliable dual-transaction flow
 
 ---
 ## Extension-Sale Site Integration
